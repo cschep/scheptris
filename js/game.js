@@ -6,12 +6,12 @@ var ROWS = 20;
 var DRAW_OUTLINE = false;
 var BACKGROUND_COLOR = "#050F1A";
 var GAME_FPS = 60;
+var LINES = 0;
 
-var canvas = document.createElement("canvas");
+var canvas = document.getElementById("game-canvas");
 var ctx = canvas.getContext("2d");
 canvas.width = COLUMNS * BLOCK_WIDTH;
 canvas.height = ROWS * BLOCK_WIDTH;
-document.body.appendChild(canvas);
 
 var board = [];
 
@@ -27,7 +27,7 @@ for (var i = 0; i < COLUMNS; i++) {
 
 var shapes = [
   {
-    name: "t",
+    name: "T",
     color: "purple",
     points: 
     [
@@ -47,7 +47,7 @@ var shapes = [
     ]
   },
   {
-    name: "i",
+    name: "I",
     color: "cyan",
     points: 
     [
@@ -67,7 +67,7 @@ var shapes = [
     ]
   },
   {
-    name: "o",
+    name: "O",
     color: "yellow",
     points: 
     [
@@ -85,7 +85,7 @@ var shapes = [
     ]
   },
   {
-    name: "s",
+    name: "S",
     color: "green",
     points: 
     [
@@ -105,7 +105,7 @@ var shapes = [
     ]
   },
   {
-    name: "z",
+    name: "Z",
     color: "red",
     points: 
     [
@@ -244,14 +244,14 @@ var collisionCheck = function(deltaX, deltaY, deltaRotation) {
 
     //walls - how to do the top? losing state?
     if (newX < 0 || newX > 9 || newY > 19) {
-      console.log("collision with wall");
+      //console.log("collision with wall");
       collide = true;
       break;
     }    
     
     //shapes    
     if (board[newX][newY].filled) {
-      console.log("collision with shape - sideways");
+      //  console.log("collision with shape - sideways");
       collide = true;
       break;
     }
@@ -284,17 +284,43 @@ var down = function(instant) {
     currentShape.y += 1;
   } else {
     currentShape.freeze();
+    checkForLines();
     nextShape();
   }
 };
 
 var nextShape = function() {
+  currentShape.shapeIndex = getRandomInt(0, 6);
   reset();
 };
 
 var changeShape = function() {
   currentShape.shapeIndex++;
   if (currentShape.shapeIndex > 6) { currentShape.shapeIndex = 0; }
+};
+
+var checkForLines = function() {
+  console.log('checking for lines');
+  for (var j = 0; j < ROWS; j++) {
+    blocksFilled = 0;
+    for (var i = 0; i < COLUMNS; i++) {
+      if (board[i][j].filled) {
+        blocksFilled++;
+      }
+    }
+
+    if (blocksFilled == COLUMNS) {
+      console.log("LINE");
+      LINES++;
+      updateLines();
+      for (var k = j; k > 1; k--) {
+        for (var i = 0; i < COLUMNS; i++) {
+          board[i][k].filled = board[i][k-1].filled;
+          board[i][k].color = board[i][k-1].color;
+        }
+      }
+    }
+  }
 };
 
 // update game objects
@@ -353,6 +379,11 @@ var drawAll = function () {
   drawCurrentShape();
 };
 
+var updateLines = function() {
+  var lineSpan = document.getElementById('lines-span');
+  lineSpan.innerHTML = LINES;
+}
+
 // game loop
 var main = function () {
   var now = Date.now();
@@ -361,7 +392,13 @@ var main = function () {
   update(delta / 1000);
 
   then = now;
+
 };
+
+//
+var getRandomInt = function(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 //hmm
 window.requestAnimFrame = (function(){

@@ -3,9 +3,32 @@
 <head>
   <html>
     <title>scheptris</title>
+    <style>
+      canvas {
+        float: left;
+      }
+
+      h1 {
+        margin: 0;
+      }
+
+      #scorebox {
+        padding-left: 10px;
+        float: left;
+      }
+    </style>
   </head>
   <body>
-    <h1>SCHEPTRIS</h1>
+    
+    <canvas id="game-canvas"></canvas>
+    
+    <div id="scorebox">
+      <h1>scheptris</h1>
+      score: <span id="score-span">0</span>
+      <br />
+      lines: <span id="lines-span">0</span>
+    </div>
+
     <script src="js/game.js"></script>
   </body>
 </html>
