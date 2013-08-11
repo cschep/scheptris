@@ -202,14 +202,14 @@ var currentShape = {
   }
 };
 
-addEventListener("keydown", function (e) {
+addEventListener("keydown", function(e) {
   //console.log(e.keyCode);
   if (e.keyCode == 32 || e.keyCode == 38) { 
     rotate();
   }
-  if (e.keyCode == 78) {
-    changeShape();
-  } 
+  // if (e.keyCode == 78) {
+  //   changeShape();
+  // } 
   if (e.keyCode == 40) { //down
     down(false);
   }
@@ -221,9 +221,23 @@ addEventListener("keydown", function (e) {
   }
 }, false);
 
+var lastXTouch = 200;
+canvas.addEventListener("touchmove", function(e) {
+  e.preventDefault();
+  console.log(e.pageX);
+  
+  if (e.pageX < lastXTouch) {
+    slide(-1);
+  } else {
+    slide(1);
+  }
+
+}, false);
+
 var reset = function () {
   currentShape.x = 4;
   currentShape.y = 0;
+  currentShape.shapeIndex = getRandomInt(0, 6);
 };
 
 var collisionCheck = function(deltaX, deltaY, deltaRotation) {
