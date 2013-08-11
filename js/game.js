@@ -363,8 +363,15 @@ var main = function () {
   then = now;
 };
 
+//hmm
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame
+})();
+
 var render = function() {
-  requestAnimationFrame(render);
+  requestAnimFrame(render);
   drawAll();
 };
  
