@@ -1,6 +1,6 @@
 // HI INTERNET!
 
-var BLOCK_WIDTH = 30;
+var BLOCK_WIDTH = 35;
 var COLUMNS = 10;
 var ROWS = 20;
 var DRAW_OUTLINE = false;
@@ -15,13 +15,13 @@ document.body.appendChild(canvas);
 
 var board = [];
 
-for (var i = 0; i < ROWS; i++) {
-  for (var j = 0; j < COLUMNS; j++) {
+for (var i = 0; i < COLUMNS; i++) {
+  for (var j = 0; j < ROWS; j++) {
     if (!board[i]) {
       board[i] = [];
     }
 
-    board[i][j] = 0;
+    board[i][j] = { color: BACKGROUND_COLOR, filled: false };  
   }
 }
 
@@ -31,23 +31,21 @@ var shapes = [
     color: "purple",
     points: 
     [
-        [[-1,0], [0,0], [1,0], 
-                 [0,1]],
-     
+                [[0,-1],
+         [-1,0], [0, 0], [1,0]], 
+
                 [[0,-1],
                  [0, 0], [1, 0],
                  [0, 1]],
 
-                [[0,-1],
-         [-1,0], [0, 0], [1,0]], 
+        [[-1,0], [0,0], [1,0], 
+                 [0,1]],
 
                 [[0,-1],
          [-1,0], [0, 0],
                  [0, 1]]
     ]
   },
-
-  //i
   {
     name: "i",
     color: "cyan",
@@ -67,16 +65,141 @@ var shapes = [
          [0, 1],
          [0, 2]]
     ]
+  },
+  {
+    name: "o",
+    color: "yellow",
+    points: 
+    [
+        [[0,0], [1,0],
+         [0,1], [1,1]],
+
+        [[0,0], [1,0],
+         [0,1], [1,1]],
+
+        [[0,0], [1,0],
+         [0,1], [1,1]],
+
+        [[0,0], [1,0],
+         [0,1], [1,1]]
+    ]
+  },
+  {
+    name: "s",
+    color: "green",
+    points: 
+    [
+              [[0,0], [1,0],
+       [-1,1], [0,1]],
+
+              [[0,-1],
+               [0, 0],[1,0],
+                      [1,1]],
+
+              [[0,0], [1,0],
+       [-1,1], [0,1]],
+
+              [[0,-1],
+               [0, 0],[1,0],
+                      [1,1]]
+    ]
+  },
+  {
+    name: "z",
+    color: "red",
+    points: 
+    [
+      [[-1,0], [0,0],
+               [0,1], [1,1]],
+
+             [[0,-1],
+      [-1, 0],[0,0],
+      [-1,1]],
+      
+      [[-1,0], [0,0],
+               [0,1], [1,1]],
+
+             [[0,-1],
+      [-1, 0],[0,0],
+      [-1,1]]
+    ]
+  },
+  {
+    name: "L",
+    color: "orange",
+    points: 
+    [
+      [[0,-1],
+       [0,0],
+       [0,1], [1,1]],
+
+             
+                  [[1,-1],
+      [-1,0],[0,0],[1, 0]],
+      
+      [[-1,-1], [0,-1],
+                [0, 0], 
+                [0, 1]],
+
+      [[-1,0], [0,0], [1,0],
+       [-1,1]]
+    ]
+  },
+  {
+    name: "J",
+    color: "blue",
+    points: 
+    [
+            [[0,-1],
+             [0,0],
+     [-1,1], [0,1]],
+
+             
+      [[-1,0],[0,0],[1,0],
+                    [1,1]],
+      
+      [[0,-1], [1,-1],
+       [0, 0], 
+       [0, 1]],
+
+      [[-1,-1],
+       [-1,0],[0,0],[1,0]],
+                    
+    ]
   }
 ];
 
-// square
-var square = {
-  //speed: 256, // movement in pixels per second
+// currentShape
+var currentShape = {  
   x: 0,
   y: 0,
   shapeIndex: 0,
-  rotationIndex: 0
+  rotationIndex: 0,
+  getPoints: function() {
+    return shapes[this.shapeIndex].points[this.rotationIndex];
+  },
+  getColor: function() {
+    return shapes[this.shapeIndex].color;
+  },
+  getPointsForRotation: function(direction) {
+    var newIndex = this.rotationIndex + direction;
+    if (newIndex < 0) {
+      newIndex = 3;
+    } else if (newIndex > 3) {
+      newIndex = 0;
+    }
+    
+    return shapes[this.shapeIndex].points[newIndex];  
+  },
+  freeze: function() {
+    for(var i = 0; i < 4; i++) {
+      x = this.getPoints()[i][0];
+      y = this.getPoints()[i][1];
+
+      board[this.x + x][this.y + y].color = this.getColor();
+      board[this.x + x][this.y + y].filled = true;
+    }
+  }
 };
 
 addEventListener("keydown", function (e) {
@@ -87,108 +210,147 @@ addEventListener("keydown", function (e) {
   if (e.keyCode == 78) {
     changeShape();
   } 
-  if (e.keyCode == 40) {  //down
-    square.y += BLOCK_WIDTH;
+  if (e.keyCode == 40) { //down
+    down(false);
   }
   if (e.keyCode == 37) { //left
-    square.x -= BLOCK_WIDTH;
+    slide(-1);
   }
   if (e.keyCode == 39) { //right
-    square.x += BLOCK_WIDTH;
+    slide(1);
   }
 }, false);
 
 var reset = function () {
-  square.x = canvas.width / 2;
-  square.y = 0;
+  currentShape.x = 4;
+  currentShape.y = 0;
 };
 
-var rotate = function() {
-  square.rotationIndex++;
-  if (square.rotationIndex > 3) { square.rotationIndex = 0; }  
+var collisionCheck = function(deltaX, deltaY, deltaRotation) {
+  collide = false;
+  
+  var points;
+  if (deltaRotation != 0) {
+    points = currentShape.getPointsForRotation(deltaRotation);
+  } else {
+    points = currentShape.getPoints();
+  }
+
+  for(var i = 0; i < 4; i++) {
+    checkX = points[i][0];
+    checkY = points[i][1];
+    newX = currentShape.x + checkX + deltaX;
+    newY = currentShape.y + checkY + deltaY;
+
+    //walls - how to do the top? losing state?
+    if (newX < 0 || newX > 9 || newY > 19) {
+      console.log("collision with wall");
+      collide = true;
+      break;
+    }    
+    
+    //shapes    
+    if (board[newX][newY].filled) {
+      console.log("collision with shape - sideways");
+      collide = true;
+      break;
+    }
+  }
+
+  return collide;
 }
 
-var changeShape = function() {
-  square.shapeIndex++;
-  if (square.shapeIndex > 1) { square.shapeIndex = 0; }
+var rotate = function() {
+  collide = collisionCheck(0, 0, 1);
+  
+  if (!collide) {
+    currentShape.rotationIndex++;
+    if (currentShape.rotationIndex > 3) { currentShape.rotationIndex = 0; }      
+  }
+};
+
+var slide = function(direction) {
+  collide = collisionCheck(direction, 0, 0);
+  
+  if (!collide) {
+    currentShape.x += direction;
+  }
 }
+
+var down = function(instant) {
+  collide = collisionCheck(0, 1, 0);
+  
+  if (!collide) {
+    currentShape.y += 1;
+  } else {
+    currentShape.freeze();
+    nextShape();
+  }
+};
+
+var nextShape = function() {
+  reset();
+};
+
+var changeShape = function() {
+  currentShape.shapeIndex++;
+  if (currentShape.shapeIndex > 6) { currentShape.shapeIndex = 0; }
+};
 
 // update game objects
 var update = function (modifier) {
-  // console.log("x: " + square.x);
-  if (square.x > canvas.width - (2 * BLOCK_WIDTH)) { 
-    square.x = canvas.width - (2 * BLOCK_WIDTH);
-  }
-
-  if (square.x < BLOCK_WIDTH) {
-    square.x = BLOCK_WIDTH;
-  }
-  
-  if (square.y < 0) {
-    square.y = 0;
-  }
-
-  if (square.y > canvas.height - (2 * BLOCK_WIDTH)) {
-    square.y = canvas.height - (2 * BLOCK_WIDTH);
-  }
-
-  // slowly move piece down?
-  // console.log(Date.now() - lastMove);
   timeSinceLastMove = Date.now() - lastMove;
-  // console.log(Date.now() - lastMove);
   if (timeSinceLastMove > 1000) {
-   square.y += BLOCK_WIDTH;
+   down(false);
    lastMove = Date.now();
   }
-
 };
 
-var drawBackground = function() {
-  ctx.fillStyle = BACKGROUND_COLOR;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  if (DRAW_OUTLINE) {
-    for (var i = 1; i < COLUMNS; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * BLOCK_WIDTH, 0);
-      ctx.lineTo(i * BLOCK_WIDTH, ROWS * BLOCK_WIDTH);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#FFF";
-      ctx.stroke();
-    }
+var drawBoard = function() {
+  for (var i = 0; i < COLUMNS; i++) {
+    for (var j = 0; j < ROWS; j++) {
+      block = board[i][j];
+      if (block.filled) {
+        ctx.fillStyle = block.color;
+        ctx.fillRect(i * BLOCK_WIDTH, j * BLOCK_WIDTH, BLOCK_WIDTH, BLOCK_WIDTH);
 
-    for (var i = 1; i < ROWS; i++) {
-      ctx.beginPath();
-      ctx.moveTo(0, i * BLOCK_WIDTH);
-      ctx.lineTo(COLUMNS * BLOCK_WIDTH, i * BLOCK_WIDTH);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#FFF";
-      ctx.stroke();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(i * BLOCK_WIDTH, j * BLOCK_WIDTH, BLOCK_WIDTH, BLOCK_WIDTH);
+
+      } else {
+        ctx.fillStyle = BACKGROUND_COLOR;
+        ctx.fillRect(i * BLOCK_WIDTH, j * BLOCK_WIDTH, BLOCK_WIDTH, BLOCK_WIDTH);
+
+      }     
     }
   }
-}
+};
 
-var drawSquare = function() {
-  var shape = shapes[square.shapeIndex]
-  var points = shape["points"][square.rotationIndex];
+var drawCurrentShape = function() {
   for (var i = 0; i < 4; i++) {
-    var x = points[i][0];
-    var y = points[i][1];
+    var x = currentShape.getPoints()[i][0];
+    var y = currentShape.getPoints()[i][1];
 
-    ctx.fillStyle = shape["color"];
-    ctx.fillRect(square.x + (x * BLOCK_WIDTH), square.y + (y * BLOCK_WIDTH),
-                                  BLOCK_WIDTH, BLOCK_WIDTH);
+    ctx.fillStyle = currentShape.getColor();
+    ctx.fillRect((currentShape.x * BLOCK_WIDTH) + (x * BLOCK_WIDTH), 
+                 (currentShape.y * BLOCK_WIDTH) + (y * BLOCK_WIDTH),
+                  BLOCK_WIDTH,
+                  BLOCK_WIDTH);
 
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
-    ctx.strokeRect(square.x + (x * BLOCK_WIDTH), square.y + (y * BLOCK_WIDTH),
-                                  BLOCK_WIDTH, BLOCK_WIDTH);
+    ctx.strokeRect((currentShape.x * BLOCK_WIDTH) + (x * BLOCK_WIDTH),
+                   (currentShape.y * BLOCK_WIDTH) + (y * BLOCK_WIDTH),
+                    BLOCK_WIDTH,
+                    BLOCK_WIDTH);
   }
-}
+};
 
 var drawAll = function () {
-  drawBackground();
-  drawSquare();
+  //drawBackground();
+  drawBoard();
+  drawCurrentShape();
 };
 
 // game loop
@@ -204,9 +366,8 @@ var main = function () {
 var render = function() {
   requestAnimationFrame(render);
   drawAll();
-}
+};
  
-
 // start it up
 reset();
 var then = Date.now();
