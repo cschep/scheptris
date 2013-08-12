@@ -203,13 +203,22 @@ var currentShape = {
 };
 
 addEventListener("keydown", function(e) {
-  //console.log(e.keyCode);
-  if (e.keyCode == 32 || e.keyCode == 38) { 
-    rotate();
+  // console.log(e.keyCode);
+  if (e.keyCode == 32) { //space
+    rotate(1);
   }
-  // if (e.keyCode == 78) {
-  //   changeShape();
-  // } 
+  if (e.keyCode == 38) { //up?
+    // rotate(1);
+    down(true);
+  }
+  if (e.keyCode == 88) { //x
+    //clockwise
+    rotate(1);
+  }
+  if (e.keyCode == 90) { //z
+    //counter clockwise
+    rotate(-1);
+  } 
   if (e.keyCode == 40) { //down
     down(false);
   }
@@ -274,12 +283,16 @@ var collisionCheck = function(deltaX, deltaY, deltaRotation) {
   return collide;
 }
 
-var rotate = function() {
-  collide = collisionCheck(0, 0, 1);
-  
+var rotate = function(direction) {
+  collide = collisionCheck(0, 0, direction);
+
   if (!collide) {
-    currentShape.rotationIndex++;
-    if (currentShape.rotationIndex > 3) { currentShape.rotationIndex = 0; }      
+    currentShape.rotationIndex += direction;
+    if (currentShape.rotationIndex > 3) {
+      currentShape.rotationIndex = 0;
+    } else if (currentShape.rotationIndex < 0) {
+      currentShape.rotationIndex = 3;
+    }
   }
 };
 

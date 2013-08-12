@@ -1,0 +1,2 @@
+scp -r js/ index.html schepman:~/code/javascript/scheptris
+
