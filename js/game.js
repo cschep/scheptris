@@ -1,5 +1,4 @@
 // HI INTERNET!
-
 var BLOCK_WIDTH = 35;
 var COLUMNS = 10;
 var ROWS = 20;
@@ -21,7 +20,7 @@ for (var i = 0; i < COLUMNS; i++) {
       board[i] = [];
     }
 
-    board[i][j] = { color: BACKGROUND_COLOR, filled: false };  
+    board[i][j] = { color: BACKGROUND_COLOR, filled: false };
   }
 }
 
@@ -29,16 +28,16 @@ var shapes = [
   {
     name: "T",
     color: "purple",
-    points: 
+    points:
     [
                 [[0,-1],
-         [-1,0], [0, 0], [1,0]], 
+         [-1,0], [0, 0], [1,0]],
 
                 [[0,-1],
                  [0, 0], [1, 0],
                  [0, 1]],
 
-        [[-1,0], [0,0], [1,0], 
+        [[-1,0], [0,0], [1,0],
                  [0,1]],
 
                 [[0,-1],
@@ -49,7 +48,7 @@ var shapes = [
   {
     name: "I",
     color: "cyan",
-    points: 
+    points:
     [
         [[-1,0], [0,0], [1,0], [2,0]],
 
@@ -69,7 +68,7 @@ var shapes = [
   {
     name: "O",
     color: "yellow",
-    points: 
+    points:
     [
         [[0,0], [1,0],
          [0,1], [1,1]],
@@ -87,7 +86,7 @@ var shapes = [
   {
     name: "S",
     color: "green",
-    points: 
+    points:
     [
               [[0,0], [1,0],
        [-1,1], [0,1]],
@@ -107,7 +106,7 @@ var shapes = [
   {
     name: "Z",
     color: "red",
-    points: 
+    points:
     [
       [[-1,0], [0,0],
                [0,1], [1,1]],
@@ -115,7 +114,7 @@ var shapes = [
              [[0,-1],
       [-1, 0],[0,0],
       [-1,1]],
-      
+
       [[-1,0], [0,0],
                [0,1], [1,1]],
 
@@ -127,18 +126,18 @@ var shapes = [
   {
     name: "L",
     color: "orange",
-    points: 
+    points:
     [
       [[0,-1],
        [0,0],
        [0,1], [1,1]],
 
-             
+
                   [[1,-1],
       [-1,0],[0,0],[1, 0]],
-      
+
       [[-1,-1], [0,-1],
-                [0, 0], 
+                [0, 0],
                 [0, 1]],
 
       [[-1,0], [0,0], [1,0],
@@ -148,29 +147,28 @@ var shapes = [
   {
     name: "J",
     color: "blue",
-    points: 
+    points:
     [
             [[0,-1],
              [0,0],
      [-1,1], [0,1]],
 
-             
+
       [[-1,0],[0,0],[1,0],
                     [1,1]],
-      
+
       [[0,-1], [1,-1],
-       [0, 0], 
+       [0, 0],
        [0, 1]],
 
       [[-1,-1],
        [-1,0],[0,0],[1,0]],
-                    
     ]
   }
 ];
 
 // currentShape
-var currentShape = {  
+var currentShape = {
   x: 0,
   y: 0,
   shapeIndex: 0,
@@ -188,8 +186,8 @@ var currentShape = {
     } else if (newIndex > 3) {
       newIndex = 0;
     }
-    
-    return shapes[this.shapeIndex].points[newIndex];  
+
+    return shapes[this.shapeIndex].points[newIndex];
   },
   freeze: function() {
     for(var i = 0; i < 4; i++) {
@@ -207,7 +205,7 @@ addEventListener("keydown", function(e) {
   if (e.keyCode == 32) { //space
     rotate(1);
   }
-  if (e.keyCode == 38) { //up?
+  if (e.keyCode == 38) { //up
     // rotate(1);
     down(true);
   }
@@ -218,7 +216,7 @@ addEventListener("keydown", function(e) {
   if (e.keyCode == 90) { //z
     //counter clockwise
     rotate(-1);
-  } 
+  }
   if (e.keyCode == 40) { //down
     down(false);
   }
@@ -233,8 +231,7 @@ addEventListener("keydown", function(e) {
 var lastXTouch = 200;
 canvas.addEventListener("touchmove", function(e) {
   e.preventDefault();
-  console.log(e.pageX);
-  
+
   if (e.pageX < lastXTouch) {
     slide(-1);
   } else {
@@ -251,7 +248,7 @@ var reset = function () {
 
 var collisionCheck = function(deltaX, deltaY, deltaRotation) {
   collide = false;
-  
+
   var points;
   if (deltaRotation != 0) {
     points = currentShape.getPointsForRotation(deltaRotation);
@@ -267,14 +264,12 @@ var collisionCheck = function(deltaX, deltaY, deltaRotation) {
 
     //walls - how to do the top? losing state?
     if (newX < 0 || newX > 9 || newY > 19) {
-      //console.log("collision with wall");
       collide = true;
       break;
-    }    
-    
-    //shapes    
+    }
+
+    //shapes
     if (board[newX][newY].filled) {
-      //  console.log("collision with shape - sideways");
       collide = true;
       break;
     }
@@ -298,15 +293,16 @@ var rotate = function(direction) {
 
 var slide = function(direction) {
   collide = collisionCheck(direction, 0, 0);
-  
+
   if (!collide) {
     currentShape.x += direction;
   }
 }
 
 var down = function(instant) {
+  //TODO: implement instant
   collide = collisionCheck(0, 1, 0);
-  
+
   if (!collide) {
     currentShape.y += 1;
   } else {
@@ -327,7 +323,6 @@ var changeShape = function() {
 };
 
 var checkForLines = function() {
-  console.log('checking for lines');
   for (var j = 0; j < ROWS; j++) {
     blocksFilled = 0;
     for (var i = 0; i < COLUMNS; i++) {
@@ -337,7 +332,6 @@ var checkForLines = function() {
     }
 
     if (blocksFilled == COLUMNS) {
-      console.log("LINE");
       LINES++;
       updateLines();
       for (var k = j; k > 1; k--) {
@@ -375,7 +369,7 @@ var drawBoard = function() {
         ctx.fillStyle = BACKGROUND_COLOR;
         ctx.fillRect(i * BLOCK_WIDTH, j * BLOCK_WIDTH, BLOCK_WIDTH, BLOCK_WIDTH);
 
-      }     
+      }
     }
   }
 };
@@ -386,7 +380,7 @@ var drawCurrentShape = function() {
     var y = currentShape.getPoints()[i][1];
 
     ctx.fillStyle = currentShape.getColor();
-    ctx.fillRect((currentShape.x * BLOCK_WIDTH) + (x * BLOCK_WIDTH), 
+    ctx.fillRect((currentShape.x * BLOCK_WIDTH) + (x * BLOCK_WIDTH),
                  (currentShape.y * BLOCK_WIDTH) + (y * BLOCK_WIDTH),
                   BLOCK_WIDTH,
                   BLOCK_WIDTH);
@@ -401,7 +395,6 @@ var drawCurrentShape = function() {
 };
 
 var drawAll = function () {
-  //drawBackground();
   drawBoard();
   drawCurrentShape();
 };
@@ -419,15 +412,12 @@ var main = function () {
   update(delta / 1000);
 
   then = now;
-
 };
 
-//
 var getRandomInt = function(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-//hmm
 window.requestAnimFrame = (function(){
   return  window.requestAnimationFrame       ||
           window.webkitRequestAnimationFrame ||
@@ -438,7 +428,7 @@ var render = function() {
   requestAnimFrame(render);
   drawAll();
 };
- 
+
 // start it up
 reset();
 var then = Date.now();
